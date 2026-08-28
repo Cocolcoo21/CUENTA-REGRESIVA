@@ -1,0 +1,1070 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#10253c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cuenta Regresiva">
+<meta name="description" content="Panel de cuenta regresiva: registra fechas objetivo y consulta los dias, horas, minutos y segundos restantes de cada hito.">
+<style>
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px; background: #eaeef4; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+</style>
+<title>Cuenta Regresiva de Hitos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper: #eaeef4;
+    --surface: #ffffff;
+    --surface-2: #f4f7fa;
+    --ink: #0f1a2a;
+    --ink-2: #33445c;
+    --muted: #61708a;
+    --line: #d3dbe6;
+    --line-2: #b5c1d2;
+    --accent: #1c4e7a;
+    --accent-2: #2f74a8;
+    --accent-soft: #e2edf6;
+    --on-accent: #ffffff;
+    --band: #10253c;
+    --band-2: #1b3a5a;
+    --band-ink: #eaf1f8;
+    --band-muted: #93aac2;
+    --crit: #9e2f2a;
+    --crit-soft: #f7e5e3;
+    --warn: #8c5c0d;
+    --warn-soft: #f8eeda;
+    --ok: #2a6a4d;
+    --ok-soft: #e2f0e9;
+    --past: #4d5b70;
+    --past-soft: #e8ecf2;
+    --shadow: 0 1px 2px rgba(16, 37, 60, .06), 0 8px 24px -12px rgba(16, 37, 60, .18);
+    --radius: 3px;
+    --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --f-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0a1017;
+      --surface: #131d29;
+      --surface-2: #182433;
+      --ink: #e7edf5;
+      --ink-2: #c2cedd;
+      --muted: #8a99ae;
+      --line: #263442;
+      --line-2: #35475a;
+      --accent: #7db2dd;
+      --accent-2: #a0cbeb;
+      --accent-soft: #16293b;
+      --on-accent: #0b1520;
+      --band: #0c1521;
+      --band-2: #16293c;
+      --band-ink: #e7edf5;
+      --band-muted: #8397ad;
+      --crit: #ec8a83;
+      --crit-soft: #33191a;
+      --warn: #dcae66;
+      --warn-soft: #2f2415;
+      --ok: #7ac6a2;
+      --ok-soft: #14291f;
+      --past: #8a99ae;
+      --past-soft: #1b2431;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 26px -14px rgba(0, 0, 0, .6);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0a1017;
+    --surface: #131d29;
+    --surface-2: #182433;
+    --ink: #e7edf5;
+    --ink-2: #c2cedd;
+    --muted: #8a99ae;
+    --line: #263442;
+    --line-2: #35475a;
+    --accent: #7db2dd;
+    --accent-2: #a0cbeb;
+    --accent-soft: #16293b;
+    --on-accent: #0b1520;
+    --band: #0c1521;
+    --band-2: #16293c;
+    --band-ink: #e7edf5;
+    --band-muted: #8397ad;
+    --crit: #ec8a83;
+    --crit-soft: #33191a;
+    --warn: #dcae66;
+    --warn-soft: #2f2415;
+    --ok: #7ac6a2;
+    --ok-soft: #14291f;
+    --past: #8a99ae;
+    --past-soft: #1b2431;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 10px 26px -14px rgba(0, 0, 0, .6);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 clamp(14px, 3vw, 28px) 72px;
+  }
+
+  /* ---------- Banda superior ---------- */
+  .band {
+    background: var(--band);
+    background-image: linear-gradient(180deg, var(--band-2) 0%, var(--band) 100%);
+    color: var(--band-ink);
+    border-bottom: 3px solid var(--accent-2);
+  }
+  .band-inner {
+    width: 100%; max-width: 1320px; margin: 0 auto;
+    padding: clamp(18px, 3vw, 26px) clamp(14px, 3vw, 28px) clamp(16px, 2.4vw, 22px);
+    display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px clamp(20px, 4vw, 40px);
+    justify-content: space-between;
+  }
+  .band-titles { flex: 1 1 320px; min-width: 0; }
+  .eyebrow {
+    font-family: var(--f-mono); font-size: 10.5px; font-weight: 500;
+    letter-spacing: .16em; text-transform: uppercase; color: var(--band-muted);
+    margin: 0 0 6px;
+  }
+  .band h1 {
+    font-family: var(--f-display); font-weight: 700;
+    font-size: clamp(21px, 4vw, 32px);
+    letter-spacing: -.015em; margin: 0; line-height: 1.1; text-wrap: balance;
+  }
+  .clock { text-align: right; font-family: var(--f-mono); flex: 0 0 auto; }
+  .clock .time {
+    font-size: clamp(26px, 5vw, 36px); font-weight: 500; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .clock .date {
+    font-size: 11px; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--band-muted); margin-top: 8px;
+  }
+
+  /* ---------- Resumen ---------- */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px; background: var(--line);
+    border: 1px solid var(--line); border-top: none;
+    margin: 0 0 clamp(18px, 3vw, 28px);
+  }
+  .tile { background: var(--surface); padding: 15px 18px 14px; min-width: 0; }
+  .tile .k {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    letter-spacing: .13em; text-transform: uppercase; color: var(--muted);
+  }
+  .tile .v {
+    font-family: var(--f-display); font-weight: 600;
+    font-size: clamp(22px, 3.4vw, 28px);
+    letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+    margin-top: 6px; line-height: 1.08; word-break: break-word;
+  }
+  .tile .v.small { font-size: clamp(15px, 2.2vw, 18px); letter-spacing: 0; }
+  .tile .s { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  .tile .s.mono {
+    font-family: var(--f-mono); font-variant-numeric: tabular-nums;
+    letter-spacing: .04em; font-size: 12px;
+  }
+  .tile.is-crit .v { color: var(--crit); }
+  .tile.is-warn .v { color: var(--warn); }
+
+  /* ---------- Barra de control ---------- */
+  .toolbar {
+    display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center;
+    margin-bottom: 18px;
+  }
+  .toolbar .spacer { flex: 1 1 auto; }
+
+  button, select, input, textarea { font: inherit; color: inherit; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent);
+    padding: 10px 17px; border-radius: var(--radius); cursor: pointer;
+    font-family: var(--f-display); font-weight: 600; font-size: 14px;
+    letter-spacing: .01em; transition: background .15s, border-color .15s;
+    min-height: 42px;
+  }
+  .btn:hover { background: var(--accent-2); border-color: var(--accent-2); }
+  .btn.ghost { background: transparent; color: var(--ink-2); border-color: var(--line-2); }
+  .btn.ghost:hover { background: var(--surface-2); border-color: var(--accent); color: var(--accent); }
+
+  .seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; }
+  .seg button {
+    background: var(--surface); border: none; border-left: 1px solid var(--line);
+    padding: 10px 15px; cursor: pointer; font-size: 12.5px; color: var(--muted);
+    font-family: var(--f-mono); letter-spacing: .04em; min-height: 42px;
+  }
+  .seg button:first-child { border-left: none; }
+  .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .seg button:hover { color: var(--ink); }
+
+  select.sel {
+    background: var(--surface); border: 1px solid var(--line-2);
+    border-radius: var(--radius); padding: 10px 11px; font-size: 12.5px;
+    font-family: var(--f-mono); color: var(--ink-2); cursor: pointer;
+    min-height: 42px; max-width: 100%;
+  }
+
+  .save-chip {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted);
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  .save-chip::before {
+    content: ""; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--ok); flex: 0 0 auto;
+  }
+  .save-chip[data-state="saving"]::before { background: var(--warn); }
+  .save-chip[data-state="local"]::before { background: var(--past); }
+
+  /* ---------- Formulario ---------- */
+  .form {
+    background: var(--surface); border: 1px solid var(--line);
+    border-top: 3px solid var(--accent);
+    box-shadow: var(--shadow); padding: clamp(16px, 2.6vw, 22px);
+    margin-bottom: clamp(18px, 3vw, 26px);
+    scroll-margin-top: 14px;
+  }
+  .form h2 {
+    font-family: var(--f-display); font-size: 14px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase; margin: 0 0 16px;
+    color: var(--accent); display: flex; align-items: center; gap: 10px;
+  }
+  .form h2::after { content: ""; height: 1px; background: var(--line); flex: 1 1 auto; }
+  .grid-f {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .field.wide { grid-column: 1 / -1; }
+  .field label {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+  }
+  .field input, .field textarea {
+    background: var(--surface-2); border: 1px solid var(--line-2);
+    border-radius: var(--radius); padding: 11px 12px; font-size: 16px;
+    font-family: var(--f-body); width: 100%; max-width: 100%;
+  }
+  .field input[type="date"], .field input[type="time"] {
+    font-family: var(--f-mono); font-size: 15px;
+  }
+  .field textarea { resize: vertical; min-height: 68px; font-size: 15px; }
+  .field input:focus-visible, .field textarea:focus-visible,
+  select.sel:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent-2); outline-offset: 2px;
+  }
+  .field .hint { font-size: 11.5px; color: var(--muted); }
+  .form-actions {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 18px;
+  }
+  .form-error { color: var(--crit); font-size: 13px; font-weight: 600; }
+
+  /* ---------- Tarjetas ---------- */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: clamp(12px, 1.6vw, 18px);
+  }
+  .card {
+    position: relative; background: var(--surface);
+    border: 1px solid var(--line); border-left: 4px solid var(--line-2);
+    box-shadow: var(--shadow); padding: 18px clamp(15px, 2vw, 20px) 16px; min-width: 0;
+  }
+  .card[data-sev="crit"] { border-left-color: var(--crit); }
+  .card[data-sev="warn"] { border-left-color: var(--warn); }
+  .card[data-sev="ok"] { border-left-color: var(--ok); }
+  .card[data-sev="past"] { border-left-color: var(--past); background: var(--surface-2); }
+
+  .card-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+  .card-title {
+    font-family: var(--f-display); font-weight: 600; font-size: 17px;
+    letter-spacing: -.01em; margin: 0; line-height: 1.25; flex: 1 1 auto;
+    text-wrap: balance; overflow-wrap: anywhere;
+  }
+  .chip {
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 600;
+    letter-spacing: .12em; text-transform: uppercase;
+    padding: 4px 8px; border-radius: 2px; flex: 0 0 auto; white-space: nowrap;
+  }
+  .chip[data-sev="crit"] { background: var(--crit-soft); color: var(--crit); }
+  .chip[data-sev="warn"] { background: var(--warn-soft); color: var(--warn); }
+  .chip[data-sev="ok"] { background: var(--ok-soft); color: var(--ok); }
+  .chip[data-sev="past"] { background: var(--past-soft); color: var(--past); }
+
+  .count { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+  .count .n {
+    font-family: var(--f-mono); font-weight: 600;
+    font-size: clamp(40px, 9vw, 54px); line-height: .95;
+    letter-spacing: -.04em; font-variant-numeric: tabular-nums;
+  }
+  .card[data-sev="crit"] .count .n { color: var(--crit); }
+  .card[data-sev="warn"] .count .n { color: var(--warn); }
+  .card[data-sev="ok"] .count .n { color: var(--accent); }
+  .card[data-sev="past"] .count .n { color: var(--past); }
+  .count .u {
+    font-family: var(--f-display); font-size: 13px; font-weight: 600;
+    letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+    padding-bottom: 5px;
+  }
+
+  /* reloj de horas · minutos · segundos */
+  .hms { display: flex; gap: 8px; margin-top: 14px; }
+  .hms .u {
+    flex: 1 1 0; min-width: 0;
+    display: flex; align-items: baseline; justify-content: center; gap: 4px;
+    background: var(--surface-2); border: 1px solid var(--line);
+    padding: 7px 6px;
+  }
+  .card[data-sev="past"] .hms .u { background: var(--surface); }
+  .hms b {
+    font-family: var(--f-mono); font-size: 19px; font-weight: 600;
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em; color: var(--ink);
+  }
+  .hms i {
+    font-style: normal; font-family: var(--f-mono); font-size: 9.5px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+  }
+  .hms-label {
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 500;
+    letter-spacing: .12em; text-transform: uppercase; color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .target {
+    font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-2);
+    margin-top: 14px; letter-spacing: .01em; overflow-wrap: anywhere;
+    padding-top: 13px; border-top: 1px solid var(--line);
+  }
+  .target .lbl { color: var(--muted); }
+
+  .breakdown {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1px; background: var(--line); border: 1px solid var(--line);
+    margin-top: 14px;
+  }
+  .bd { background: var(--surface); padding: 9px 11px; min-width: 0; }
+  .bd .k {
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 500;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+  }
+  .bd .v {
+    font-family: var(--f-mono); font-size: 15px; font-weight: 500;
+    font-variant-numeric: tabular-nums; margin-top: 3px; color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .note {
+    margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line);
+    font-size: 13.5px; color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere;
+  }
+  .note .k {
+    font-family: var(--f-mono); font-size: 9.5px; font-weight: 500;
+    letter-spacing: .1em; text-transform: uppercase; color: var(--muted);
+    display: block; margin-bottom: 4px;
+  }
+
+  .card-actions {
+    display: flex; gap: 16px; margin-top: 14px; padding-top: 13px;
+    border-top: 1px solid var(--line);
+  }
+  .link-btn {
+    background: none; border: none; padding: 4px 0; cursor: pointer;
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); text-decoration: underline;
+    text-decoration-color: var(--line-2); text-underline-offset: 3px;
+  }
+  .link-btn:hover { color: var(--accent); text-decoration-color: var(--accent); }
+  .link-btn.danger:hover { color: var(--crit); text-decoration-color: var(--crit); }
+
+  .empty {
+    grid-column: 1 / -1;
+    background: var(--surface); border: 1px dashed var(--line-2);
+    padding: clamp(34px, 6vw, 54px) 24px; text-align: center; color: var(--muted);
+  }
+  .empty .badge {
+    font-family: var(--f-mono); font-size: 10px; font-weight: 500;
+    letter-spacing: .18em; text-transform: uppercase; color: var(--accent);
+    display: block; margin-bottom: 12px;
+  }
+  .empty h3 {
+    font-family: var(--f-display); font-size: clamp(19px, 3.2vw, 24px); font-weight: 600;
+    color: var(--ink); margin: 0 0 8px; letter-spacing: -.01em;
+  }
+  .empty p { margin: 0 auto; font-size: 14.5px; max-width: 46ch; }
+  .empty .btn { margin-top: 20px; }
+
+  footer.foot {
+    margin-top: 34px; padding-top: 16px; border-top: 1px solid var(--line);
+    font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted);
+    display: flex; flex-wrap: wrap; gap: 8px 20px; justify-content: space-between;
+  }
+
+  /* ---------- Móvil ---------- */
+  @media (max-width: 640px) {
+    body { font-size: 15.5px; }
+    .band-inner { align-items: flex-start; }
+    .clock { text-align: left; }
+    .clock .date { margin-top: 5px; }
+    .summary { grid-template-columns: 1fr 1fr; }
+    .toolbar > .btn { flex: 1 1 100%; }
+    .toolbar > .seg { flex: 1 1 100%; }
+    .toolbar > .seg button { flex: 1 1 0; }
+    .toolbar > select.sel { flex: 1 1 100%; }
+    .toolbar .spacer { display: none; }
+    .cards { grid-template-columns: 1fr; }
+    .card { border-left-width: 3px; }
+    .breakdown { grid-template-columns: 1fr; }
+    .form-actions > .btn { flex: 1 1 auto; }
+  }
+  @media (max-width: 380px) {
+    .summary { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="band">
+  <div class="band-inner">
+    <div class="band-titles">
+      <p class="eyebrow">Panel de fechas</p>
+      <h1>Cuenta regresiva de hitos</h1>
+    </div>
+    <div class="clock">
+      <div class="time" id="clock-time">--:--:--</div>
+      <div class="date" id="clock-date">&nbsp;</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="summary" id="summary" aria-label="Resumen">
+    <div class="tile"><div class="k">Hitos registrados</div><div class="v">—</div><div class="s">Cargando</div></div>
+    <div class="tile"><div class="k">Próximo vencimiento</div><div class="v small">—</div><div class="s">Cargando</div></div>
+    <div class="tile"><div class="k">Fecha objetivo más cercana</div><div class="v small">—</div><div class="s">Cargando</div></div>
+  </section>
+
+  <div class="toolbar">
+    <button class="btn" id="toggle-form">Registrar fecha</button>
+    <div class="seg" role="group" aria-label="Filtro">
+      <button data-filter="todos" aria-pressed="true">Todos</button>
+      <button data-filter="activos" aria-pressed="false">Vigentes</button>
+    </div>
+    <select class="sel" id="sort" aria-label="Ordenar">
+      <option value="prox">Orden: más próximo primero</option>
+      <option value="lejano">Orden: más lejano primero</option>
+      <option value="alfa">Orden: alfabético</option>
+    </select>
+    <span class="spacer"></span>
+    <span class="save-chip" id="save-chip" data-state="idle">Sin cambios</span>
+  </div>
+
+  <form class="form" id="form" hidden>
+    <h2 id="form-title">Registrar nueva fecha</h2>
+    <div class="grid-f">
+      <div class="field">
+        <label for="f-titulo">Hito o compromiso</label>
+        <input id="f-titulo" name="titulo" type="text" maxlength="120" autocomplete="off" placeholder="Ej. Entrega del informe final">
+      </div>
+      <div class="field">
+        <label for="f-fecha">Fecha objetivo</label>
+        <input id="f-fecha" name="fecha" type="date" required>
+      </div>
+      <div class="field">
+        <label for="f-hora">Hora objetivo</label>
+        <input id="f-hora" name="hora" type="time">
+        <span class="hint">Opcional. Si la dejas vacía, cuenta hasta las 00:00.</span>
+      </div>
+      <div class="field wide">
+        <label for="f-nota">Notas e hitos intermedios</label>
+        <textarea id="f-nota" name="nota" maxlength="600" placeholder="Ej. Revisión previa el 20 de septiembre."></textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" type="submit" id="form-submit">Guardar fecha</button>
+      <button class="btn ghost" type="button" id="form-cancel">Cancelar</button>
+      <span class="form-error" id="form-error"></span>
+    </div>
+  </form>
+
+  <section class="cards" id="cards" aria-label="Hitos registrados">
+    <div class="empty">
+      <span class="badge">Vista sin JavaScript</span>
+      <h3>Este visor no puede ejecutar la página</h3>
+      <p>Estás abriendo el archivo en un visor que bloquea JavaScript — la vista previa de Archivos en iPhone y iPad hace justo eso. Abre la página desde el enlace publicado en Safari o Chrome y el contador funcionará con normalidad.</p>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span id="foot-count">—</span>
+    <span id="foot-store">Los contadores se actualizan cada segundo</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var STORE = "cuenta-regresiva-hitos-v1";
+  var PREFS = "cuenta-regresiva-prefs-v1";
+  var DATA_FILE = "data/hitos.json";
+
+  var state = { v: 1, entries: [] };
+  var prefs = { filter: "todos", sort: "prox" };
+  var api = null;
+  var canPublish = true;
+  var saveTimer = null;
+  var pendingSave = false;
+  var editingId = null;
+  var targets = {};   // id -> timestamp objetivo
+  var lastDays = {};  // id -> días completos mostrados
+
+  // ---------- utilidades ----------
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function parseDate(s) {
+    if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    var p = s.split("-");
+    var d = new Date(+p[0], +p[1] - 1, +p[2]);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function validTime(s) { return typeof s === "string" && /^\d{2}:\d{2}$/.test(s); }
+  function targetDate(entry) {
+    var d = parseDate(entry.fecha);
+    if (!d) return null;
+    if (validTime(entry.hora)) {
+      var hm = entry.hora.split(":");
+      d.setHours(+hm[0], +hm[1], 0, 0);
+    }
+    return d;
+  }
+  function toISO(d) {
+    var m = String(d.getMonth() + 1), dd = String(d.getDate());
+    return d.getFullYear() + "-" + (m.length < 2 ? "0" + m : m) + "-" + (dd.length < 2 ? "0" + dd : dd);
+  }
+  function today() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
+  function pad2(n) { return n < 10 ? "0" + n : String(n); }
+
+  function fmtLong(d) {
+    try { return d.toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" }); }
+    catch (e) { return toISO(d); }
+  }
+  function fmtShort(d) {
+    try { return d.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" }); }
+    catch (e) { return toISO(d); }
+  }
+  function plural(n, one, many) { return Math.abs(n) === 1 ? one : many; }
+
+  function calendarDiff(a, b) {
+    var sign = b < a ? -1 : 1;
+    var from = sign > 0 ? a : b, to = sign > 0 ? b : a;
+    var y = to.getFullYear() - from.getFullYear();
+    var m = to.getMonth() - from.getMonth();
+    var d = to.getDate() - from.getDate();
+    if (d < 0) { m--; d += new Date(to.getFullYear(), to.getMonth(), 0).getDate(); }
+    if (m < 0) { y--; m += 12; }
+    return { y: y, m: m, d: d };
+  }
+
+  // descompone la diferencia en días / horas / minutos / segundos
+  function split(ms) {
+    var neg = ms < 0;
+    var s = Math.floor(Math.abs(ms) / 1000);
+    return {
+      neg: neg,
+      d: Math.floor(s / 86400),
+      h: Math.floor((s % 86400) / 3600),
+      m: Math.floor((s % 3600) / 60),
+      s: s % 60
+    };
+  }
+
+  function severity(days, neg) {
+    if (neg) return "past";
+    if (days < 1) return "crit";
+    if (days <= 7) return "crit";
+    if (days <= 30) return "warn";
+    return "ok";
+  }
+  function sevLabel(t) {
+    if (t.neg) return "Fecha pasada";
+    if (t.d === 0) return "Últimas horas";
+    if (t.d <= 7) return "Inminente";
+    if (t.d <= 30) return "Próximo";
+    return "En curso";
+  }
+
+  // ---------- estado ----------
+  function normalize(raw) {
+    if (!raw || !Array.isArray(raw.entries)) return null;
+    var seen = {};
+    var entries = raw.entries.filter(function (e) {
+      return e && typeof e.fecha === "string" && parseDate(e.fecha);
+    }).map(function (e) {
+      var id = typeof e.id === "string" && e.id && !seen[e.id] ? e.id : "h" + Math.random().toString(36).slice(2, 9);
+      seen[id] = true;
+      return {
+        id: id,
+        titulo: String(e.titulo || "Hito sin nombre").slice(0, 120),
+        fecha: e.fecha,
+        hora: validTime(e.hora) ? e.hora : "",
+        nota: String(e.nota || "").slice(0, 600),
+        creado: parseDate(e.creado) ? e.creado : toISO(today())
+      };
+    });
+    return { v: 1, entries: entries };
+  }
+
+  function loadLocal() {
+    try {
+      var raw = localStorage.getItem(STORE);
+      if (!raw) return null;
+      return normalize(JSON.parse(raw));
+    } catch (e) { return null; }
+  }
+  function saveLocal() {
+    try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+  }
+  function loadPrefs() {
+    try {
+      var raw = localStorage.getItem(PREFS);
+      if (raw) {
+        var p = JSON.parse(raw);
+        if (p && typeof p === "object") {
+          if (p.filter === "todos" || p.filter === "activos") prefs.filter = p.filter;
+          if (p.sort) prefs.sort = p.sort;
+        }
+      }
+    } catch (e) {}
+  }
+  function savePrefs() {
+    try { localStorage.setItem(PREFS, JSON.stringify(prefs)); } catch (e) {}
+  }
+
+  // ---------- guardado ----------
+  var chip = document.getElementById("save-chip");
+  var footStore = document.getElementById("foot-store");
+  function setChip(stateName, text) {
+    chip.dataset.state = stateName;
+    chip.textContent = text;
+    if (stateName === "local") {
+      footStore.textContent = "Los datos quedan guardados en este navegador y este dispositivo";
+    } else if (stateName === "idle") {
+      footStore.textContent = "Los datos quedan guardados en la página, disponibles al abrir el enlace";
+    }
+  }
+
+  function scheduleSave() {
+    saveLocal();
+    if (!canPublish) { setChip("local", "Guardado en este navegador"); return; }
+    pendingSave = true;
+    setChip("saving", "Guardando…");
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(flushSave, 1400);
+  }
+
+  function flushSave() {
+    saveTimer = null;
+    if (!pendingSave) return;
+    if (!api) { setChip("local", "Guardado en este navegador"); return; }
+    var payload = {};
+    payload[DATA_FILE] = JSON.stringify({ v: 1, entries: state.entries, actualizado: new Date().toISOString() }, null, 2);
+    pendingSave = false;
+    api.publish(payload).then(function () {
+      setChip("idle", "Guardado en la página");
+    }, function (err) {
+      var code = err && err.code ? err.code : "upstream_error";
+      if (code === "conflict") {
+        setChip("saving", "Actualizando…");
+        setTimeout(function () { location.reload(); }, 400);
+        return;
+      }
+      if (code === "rate_limited") {
+        pendingSave = true;
+        setChip("saving", "Guardando…");
+        saveTimer = setTimeout(flushSave, 6000);
+        return;
+      }
+      // Cualquier otro caso (incluida la falta de permiso de escritura):
+      // se sigue editando con normalidad y el trabajo queda en el navegador.
+      canPublish = false;
+      setChip("local", "Guardado en este navegador");
+    });
+  }
+
+  // ---------- render ----------
+  function hmsHTML(t) {
+    return '<span class="u"><b>' + pad2(t.h) + '</b><i>h</i></span>' +
+           '<span class="u"><b>' + pad2(t.m) + '</b><i>m</i></span>' +
+           '<span class="u"><b>' + pad2(t.s) + '</b><i>s</i></span>';
+  }
+
+  function renderSummary(list, now) {
+    var host = document.getElementById("summary");
+
+    if (!list.length) {
+      host.innerHTML =
+        '<div class="tile"><div class="k">Hitos registrados</div><div class="v">0</div>' +
+        '<div class="s">Pendiente a creación</div></div>' +
+        '<div class="tile"><div class="k">Próximo vencimiento</div><div class="v small">Pendiente a creación</div>' +
+        '<div class="s">Aún no hay fechas</div></div>' +
+        '<div class="tile"><div class="k">Fecha objetivo más cercana</div><div class="v small">Pendiente a creación</div>' +
+        '<div class="s">Aún no hay fechas</div></div>';
+      return;
+    }
+
+    var next = null;
+    list.forEach(function (item) {
+      if (item.ms < 0) return;
+      if (!next || item.ms < next.ms) next = item;
+    });
+
+    var n = list.length;
+    var tiles = [
+      '<div class="tile"><div class="k">Hitos registrados</div><div class="v">' + n + '</div>' +
+      '<div class="s">' + (n === 1 ? "1 fecha en seguimiento" : n + " fechas en seguimiento") + '</div></div>'
+    ];
+
+    if (next) {
+      var t = split(next.ms);
+      tiles.push(
+        '<div class="tile ' + (t.d <= 7 ? "is-crit" : (t.d <= 30 ? "is-warn" : "")) + '">' +
+        '<div class="k">Próximo vencimiento</div>' +
+        '<div class="v"><span data-sum-d>' + t.d + '</span> d</div>' +
+        '<div class="s mono" data-sum-hms>' + pad2(t.h) + " h " + pad2(t.m) + " m " + pad2(t.s) + ' s</div></div>',
+        '<div class="tile"><div class="k">Fecha objetivo más cercana</div>' +
+        '<div class="v small">' + esc(fmtShort(next.target)) + '</div>' +
+        '<div class="s">' + esc(next.e.titulo) + '</div></div>'
+      );
+      summaryNextId = next.e.id;
+    } else {
+      tiles.push(
+        '<div class="tile"><div class="k">Próximo vencimiento</div><div class="v small">Sin fechas por delante</div>' +
+        '<div class="s">Todas las fechas ya pasaron</div></div>',
+        '<div class="tile"><div class="k">Fecha objetivo más cercana</div><div class="v small">Sin fechas por delante</div>' +
+        '<div class="s">Registra una nueva fecha</div></div>'
+      );
+      summaryNextId = null;
+    }
+    host.innerHTML = tiles.join("");
+  }
+  var summaryNextId = null;
+
+  function cardHTML(item, refDay) {
+    var e = item.e, t = split(item.ms);
+    var sev = severity(t.d, t.neg);
+    var unit = t.neg
+      ? plural(t.d, "día transcurrido", "días transcurridos")
+      : plural(t.d, "día restante", "días restantes");
+
+    // el desglose de calendario se deriva de los mismos días completos del contador
+    var endRef = new Date(refDay.getTime());
+    endRef.setDate(endRef.getDate() + t.d);
+    var cd = calendarDiff(refDay, endRef);
+    var cdParts = [];
+    if (cd.y) cdParts.push(cd.y + " " + plural(cd.y, "año", "años"));
+    if (cd.m) cdParts.push(cd.m + " " + plural(cd.m, "mes", "meses"));
+    if (cd.d || !cdParts.length) cdParts.push(cd.d + " " + plural(cd.d, "día", "días"));
+
+    var weeks = Math.floor(t.d / 7), rem = t.d % 7;
+    var weeksText = weeks ? (weeks + " sem" + (rem ? " " + rem + " d" : "")) : (rem + " d");
+
+    var horaTxt = validTime(e.hora) ? " · " + e.hora : " · 00:00";
+
+    return '<article class="card" data-sev="' + sev + '" data-card="' + esc(e.id) + '">' +
+      '<div class="card-head">' +
+        '<h3 class="card-title">' + esc(e.titulo) + '</h3>' +
+        '<span class="chip" data-sev="' + sev + '">' + sevLabel(t) + '</span>' +
+      '</div>' +
+      '<div class="count">' +
+        '<span class="n" data-days="' + esc(e.id) + '">' + t.d + '</span>' +
+        '<span class="u" data-unit="' + esc(e.id) + '">' + unit + '</span>' +
+      '</div>' +
+      '<div class="hms" data-hms="' + esc(e.id) + '">' + hmsHTML(t) + '</div>' +
+      '<div class="hms-label">' + (t.neg ? "Tiempo transcurrido" : "Tiempo restante") + '</div>' +
+      '<div class="target"><span class="lbl">Objetivo</span> ' + esc(fmtLong(item.target)) + esc(horaTxt) + '</div>' +
+      '<div class="breakdown">' +
+        '<div class="bd"><div class="k">Semanas</div><div class="v" data-weeks="' + esc(e.id) + '">' + weeksText + '</div></div>' +
+        '<div class="bd"><div class="k">Calendario</div><div class="v">' + cdParts.join(" · ") + '</div></div>' +
+      '</div>' +
+      (e.nota ? '<div class="note"><span class="k">Notas e hitos</span>' + esc(e.nota) + '</div>' : '') +
+      '<div class="card-actions">' +
+        '<button class="link-btn" data-act="edit" data-id="' + esc(e.id) + '">Editar</button>' +
+        '<button class="link-btn danger" data-act="del" data-id="' + esc(e.id) + '">Eliminar</button>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function emptyHTML(hasEntries) {
+    if (hasEntries) {
+      return '<div class="empty"><h3>Ningún hito en este filtro</h3>' +
+        '<p>Cambia el filtro a «Todos» para ver las fechas que ya pasaron.</p></div>';
+    }
+    return '<div class="empty"><span class="badge">Pendiente a creación</span>' +
+      '<h3>Aún no hay fechas registradas</h3>' +
+      '<p>Cada fecha genera su propia cuenta regresiva en días, horas, minutos y segundos.</p>' +
+      '<button class="btn" data-act="new">Registrar la primera fecha</button></div>';
+  }
+
+  function buildItems(now) {
+    targets = {};
+    return state.entries.map(function (e) {
+      var target = targetDate(e);
+      targets[e.id] = target.getTime();
+      return { e: e, target: target, ms: target.getTime() - now };
+    });
+  }
+
+  function render() {
+    var now = Date.now();
+    var refDay = today();
+    var all = buildItems(now);
+
+    renderSummary(all, now);
+
+    var list = all.filter(function (i) { return prefs.filter === "activos" ? i.ms >= 0 : true; });
+
+    list.sort(function (a, b) {
+      if (prefs.sort === "alfa") return a.e.titulo.localeCompare(b.e.titulo, "es");
+      if (prefs.sort === "lejano") return b.ms - a.ms;
+      var ao = a.ms < 0 ? 1 : 0, bo = b.ms < 0 ? 1 : 0;
+      if (ao !== bo) return ao - bo;
+      return ao ? b.ms - a.ms : a.ms - b.ms;
+    });
+
+    var host = document.getElementById("cards");
+    if (!list.length) {
+      host.innerHTML = emptyHTML(state.entries.length > 0);
+    } else {
+      host.innerHTML = list.map(function (i) { return cardHTML(i, refDay); }).join("");
+    }
+
+    lastDays = {};
+    all.forEach(function (i) {
+      var t = split(i.ms);
+      lastDays[i.e.id] = (t.neg ? "-" : "+") + t.d;
+    });
+
+    var n = state.entries.length;
+    document.getElementById("foot-count").textContent = n
+      ? n + " " + plural(n, "hito registrado", "hitos registrados") + " · mostrando " + list.length
+      : "Pendiente a creación";
+  }
+
+  // actualiza solo los números que cambian cada segundo
+  function tickCountdowns() {
+    var now = Date.now();
+    var needsFullRender = false;
+
+    for (var id in targets) {
+      if (!Object.prototype.hasOwnProperty.call(targets, id)) continue;
+      var t = split(targets[id] - now);
+      var key = (t.neg ? "-" : "+") + t.d;
+      if (lastDays[id] !== key) { needsFullRender = true; continue; }
+      var hms = document.querySelector('[data-hms="' + id + '"]');
+      if (hms) hms.innerHTML = hmsHTML(t);
+      if (id === summaryNextId) {
+        var sh = document.querySelector("[data-sum-hms]");
+        if (sh) sh.textContent = pad2(t.h) + " h " + pad2(t.m) + " m " + pad2(t.s) + " s";
+      }
+    }
+    if (needsFullRender) render();
+  }
+
+  // ---------- reloj superior ----------
+  var lastISO = "";
+  function tick() {
+    var now = new Date();
+    var t;
+    try { t = now.toLocaleTimeString("es-CO", { hour12: false }); }
+    catch (e) { t = now.toTimeString().slice(0, 8); }
+    document.getElementById("clock-time").textContent = t;
+    document.getElementById("clock-date").textContent = fmtLong(now);
+    var iso = toISO(now);
+    if (iso !== lastISO) { lastISO = iso; render(); return; }
+    tickCountdowns();
+  }
+
+  // ---------- interacción ----------
+  var form = document.getElementById("form");
+  var fTitulo = document.getElementById("f-titulo");
+  var fFecha = document.getElementById("f-fecha");
+  var fHora = document.getElementById("f-hora");
+  var fNota = document.getElementById("f-nota");
+  var fError = document.getElementById("form-error");
+
+  var toggleBtn = document.getElementById("toggle-form");
+  // En pantallas táctiles el navegador ignora el enfoque automático: hay que
+  // desplazar el formulario a la vista o el botón parece no hacer nada.
+  var isTouch = false;
+  try { isTouch = window.matchMedia("(pointer: coarse)").matches; } catch (e) {}
+
+  function openForm(entry) {
+    editingId = entry ? entry.id : null;
+    document.getElementById("form-title").textContent = entry ? "Editar hito" : "Registrar nueva fecha";
+    document.getElementById("form-submit").textContent = entry ? "Guardar cambios" : "Guardar fecha";
+    fTitulo.value = entry ? entry.titulo : "";
+    fFecha.value = entry ? entry.fecha : "";
+    fHora.value = entry ? entry.hora : "";
+    fNota.value = entry ? entry.nota : "";
+    fError.textContent = "";
+    form.hidden = false;
+    toggleBtn.textContent = "Cerrar formulario";
+    try { form.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    catch (e) { form.scrollIntoView(); }
+    if (!isTouch) fTitulo.focus();
+  }
+  function closeForm() {
+    form.hidden = true;
+    editingId = null;
+    fError.textContent = "";
+    toggleBtn.textContent = "Registrar fecha";
+  }
+
+  toggleBtn.addEventListener("click", function () {
+    if (form.hidden) openForm(null); else closeForm();
+  });
+  document.getElementById("form-cancel").addEventListener("click", closeForm);
+
+  form.addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var titulo = fTitulo.value.trim();
+    var fecha = fFecha.value;
+    var hora = validTime(fHora.value) ? fHora.value : "";
+    if (!parseDate(fecha)) { fError.textContent = "Indica una fecha objetivo válida."; fFecha.focus(); return; }
+    if (!titulo) { fError.textContent = "Ponle un nombre al hito para identificarlo."; fTitulo.focus(); return; }
+
+    if (editingId) {
+      state.entries = state.entries.map(function (e) {
+        if (e.id !== editingId) return e;
+        return { id: e.id, titulo: titulo, fecha: fecha, hora: hora, nota: fNota.value.trim(), creado: e.creado };
+      });
+    } else {
+      state.entries.push({
+        id: "h" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        titulo: titulo, fecha: fecha, hora: hora, nota: fNota.value.trim(),
+        creado: toISO(today())
+      });
+    }
+    closeForm();
+    render();
+    scheduleSave();
+    var cards = document.getElementById("cards");
+    try { cards.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    catch (e) { cards.scrollIntoView(); }
+  });
+
+  document.getElementById("cards").addEventListener("click", function (ev) {
+    var btn = ev.target.closest ? ev.target.closest("button[data-act]") : null;
+    if (!btn) return;
+    var act = btn.getAttribute("data-act");
+    if (act === "new") { openForm(null); return; }
+    var id = btn.getAttribute("data-id");
+    var entry = state.entries.filter(function (e) { return e.id === id; })[0];
+    if (!entry) return;
+    if (act === "edit") {
+      openForm(entry);
+    } else {
+      state.entries = state.entries.filter(function (e) { return e.id !== id; });
+      if (editingId === id) closeForm();
+      render();
+      scheduleSave();
+    }
+  });
+
+  document.querySelectorAll(".seg button[data-filter]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      prefs.filter = b.getAttribute("data-filter");
+      document.querySelectorAll(".seg button[data-filter]").forEach(function (o) {
+        o.setAttribute("aria-pressed", o === b ? "true" : "false");
+      });
+      savePrefs();
+      render();
+    });
+  });
+
+  var sortSel = document.getElementById("sort");
+  sortSel.addEventListener("change", function () {
+    prefs.sort = sortSel.value;
+    savePrefs();
+    render();
+  });
+
+  // ---------- arranque ----------
+  loadPrefs();
+  document.querySelectorAll(".seg button[data-filter]").forEach(function (o) {
+    o.setAttribute("aria-pressed", o.getAttribute("data-filter") === prefs.filter ? "true" : "false");
+  });
+  sortSel.value = prefs.sort;
+
+  state = loadLocal() || { v: 1, entries: [] };
+  render();
+  tick();
+  setInterval(tick, 1000);
+
+  // El archivo de datos compartido solo existe dentro de la página publicada.
+  // En un servidor web normal no se busca: los datos viven en el navegador.
+  var inArtifact = !!(window.claude && typeof window.claude.use === "function");
+  if (inArtifact && typeof fetch === "function" && location.protocol !== "file:") {
+    fetch(DATA_FILE, { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("sin archivo");
+      return r.json();
+    }).then(function (json) {
+      var fromServer = normalize(json);
+      if (fromServer) {
+        state = fromServer;
+        saveLocal();
+        render();
+        setChip("idle", "Guardado en la página");
+      }
+    }).catch(function () { /* primera apertura: se conserva el estado local */ });
+  }
+
+  if (inArtifact) {
+    window.claude.use("artifact").then(function (a) {
+      if (!a) { canPublish = false; setChip("local", "Guardado en este navegador"); return; }
+      api = a;
+      if (pendingSave && !saveTimer) flushSave();
+    }, function () { canPublish = false; setChip("local", "Guardado en este navegador"); });
+  } else {
+    canPublish = false;
+    setChip("local", "Guardado en este navegador");
+  }
+})();
+</script>
+
+</body>
+</html>
