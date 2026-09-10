@@ -8,6 +8,10 @@ secrets.json
 *.pem
 *.key
 
+# --- Documento de trabajo interno ---
+# Se mantiene solo en local: el repositorio es público.
+ESTADO.md
+
 # --- macOS ---
 .DS_Store
 ._*
