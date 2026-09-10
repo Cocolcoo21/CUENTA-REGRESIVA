@@ -1,0 +1,32 @@
+# --- Credenciales y configuración local ---
+# Nunca deben subirse: este repositorio es público.
+.env
+.env.*
+!.env.example
+config.local.js
+secrets.json
+*.pem
+*.key
+
+# --- macOS ---
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# --- Editores ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Herramientas locales ---
+.claude/
+CLAUDE.local.md
+
+# --- Dependencias y compilación (por si más adelante se agregan) ---
+node_modules/
+dist/
+build/
+*.log
