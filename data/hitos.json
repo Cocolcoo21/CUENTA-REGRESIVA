@@ -1,6 +1,24 @@
 {
   "v": 1,
-  "actualizado": "2026-09-11T00:00:00.000Z",
-  "entries": [],
-  "historial": []
+  "actualizado": "2026-09-11T16:05:08.705Z",
+  "entries": [
+    {
+      "id": "hmtx5dg7sioca",
+      "titulo": "ejemplo 1",
+      "fecha": "2026-09-19",
+      "hora": "",
+      "nota": "xxx",
+      "etiquetas": [],
+      "destacado": false,
+      "creado": "2026-09-11"
+    }
+  ],
+  "historial": [
+    {
+      "ts": "2026-09-11T16:05:07.288Z",
+      "quien": "",
+      "accion": "crear",
+      "titulo": "ejemplo 1"
+    }
+  ]
 }
