@@ -1,8 +1,27 @@
 {
   "v": 1,
-  "actualizado": "2026-09-11T16:05:55.926Z",
-  "entries": [],
+  "actualizado": "2026-09-11T16:06:29.781Z",
+  "entries": [
+    {
+      "id": "hmtx5f6r4kakw",
+      "titulo": "xxxx",
+      "fecha": "2026-09-12",
+      "hora": "",
+      "nota": "xxx",
+      "etiquetas": [
+        "x"
+      ],
+      "destacado": false,
+      "creado": "2026-09-11"
+    }
+  ],
   "historial": [
+    {
+      "ts": "2026-09-11T16:06:28.336Z",
+      "quien": "",
+      "accion": "crear",
+      "titulo": "xxxx"
+    },
     {
       "ts": "2026-09-11T16:05:54.553Z",
       "quien": "",
