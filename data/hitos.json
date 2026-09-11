@@ -1,21 +1,14 @@
 {
   "v": 1,
-  "actualizado": "2026-09-11T16:06:29.781Z",
-  "entries": [
-    {
-      "id": "hmtx5f6r4kakw",
-      "titulo": "xxxx",
-      "fecha": "2026-09-12",
-      "hora": "",
-      "nota": "xxx",
-      "etiquetas": [
-        "x"
-      ],
-      "destacado": false,
-      "creado": "2026-09-11"
-    }
-  ],
+  "actualizado": "2026-09-11T16:07:09.086Z",
+  "entries": [],
   "historial": [
+    {
+      "ts": "2026-09-11T16:07:07.734Z",
+      "quien": "",
+      "accion": "borrar",
+      "titulo": "xxxx"
+    },
     {
       "ts": "2026-09-11T16:06:28.336Z",
       "quien": "",
