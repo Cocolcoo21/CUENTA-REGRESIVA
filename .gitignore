@@ -29,6 +29,12 @@ ESTADO.md
 .claude/
 CLAUDE.local.md
 
+# --- Servicio de guardado ---
+# La configuración de Cloudflare y el token nunca se suben.
+worker/node_modules/
+worker/.wrangler/
+.dev.vars
+
 # --- Dependencias y compilación (por si más adelante se agregan) ---
 node_modules/
 dist/

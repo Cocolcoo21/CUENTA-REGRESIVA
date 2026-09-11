@@ -1,0 +1,18 @@
+name = "cuenta-regresiva-cacom5"
+main = "index.js"
+compatibility_date = "2026-09-01"
+
+# Publica el servicio en una dirección propia .workers.dev.
+workers_dev = true
+
+[vars]
+# Repositorio donde vive data/hitos.json y rama que publica GitHub Pages.
+REPO = "Cocolcoo21/CUENTA-REGRESIVA"
+RAMA = "main"
+
+# Página que tiene permiso para guardar. Con "*" guarda cualquiera; conviene
+# dejar la dirección publicada en cuanto esté confirmada.
+ORIGEN = "https://cocolcoo21.github.io"
+
+# GITHUB_TOKEN no va aquí: es un secreto y se carga aparte.
+#   npx wrangler secret put GITHUB_TOKEN

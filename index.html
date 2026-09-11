@@ -195,7 +195,7 @@
   }
 
   /* ---------- receta de vidrio ---------- */
-  .band, .tile, .tagbar, .form, .card, .empty {
+  .band, .tile, .tagbar, .form, .card, .empty, .hist {
     background: var(--glass);
     -webkit-backdrop-filter: blur(var(--blur)) saturate(var(--sat));
     backdrop-filter: blur(var(--blur)) saturate(var(--sat));
@@ -374,6 +374,57 @@
   }
   .save-chip[data-state="saving"]::before { background: var(--warn); box-shadow: 0 0 8px -1px var(--warn); }
   .save-chip[data-state="local"]::before { background: var(--past); box-shadow: none; }
+
+  /* ---------- historial de cambios ---------- */
+  .hist {
+    border-radius: var(--radius);
+    padding: 18px 20px 16px; margin-bottom: 18px;
+  }
+  .hist-head {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+    margin-bottom: 14px;
+  }
+  .hist-head h2 {
+    margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-2); flex: 1 1 auto;
+  }
+  .hist-head label {
+    font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .hist-head input {
+    background: var(--glass-3); border: 1px solid var(--glass-brd);
+    border-radius: var(--pill); padding: 9px 15px; min-height: 40px;
+    font-size: 13px; color: var(--ink); width: 190px; max-width: 100%;
+  }
+  .hist-head input:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+
+  .hist-list { list-style: none; margin: 0; padding: 0; }
+  .hist-list li {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px;
+    padding: 9px 0; border-top: 1px solid var(--line); font-size: 13.5px;
+  }
+  .hist-list li:first-child { border-top: none; }
+  .hist-when {
+    font-family: var(--f-mono); font-size: 11px; color: var(--muted);
+    flex: 0 0 auto; min-width: 122px;
+  }
+  .hist-what { color: var(--ink-2); flex: 1 1 220px; }
+  .hist-what b { color: var(--ink); font-weight: 600; }
+  .hist-tag {
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--warn);
+    border: 1px solid var(--glass-brd); border-radius: var(--pill);
+    padding: 2px 9px; flex: 0 0 auto;
+  }
+  .hist-empty { color: var(--muted); }
+  .hist-foot {
+    margin: 14px 0 0; font-size: 12px; color: var(--muted);
+    border-top: 1px solid var(--line); padding-top: 12px;
+  }
+  @media (max-width: 560px) {
+    .hist-when { min-width: 100%; }
+  }
 
   /* ---------- etiquetas ---------- */
   .tagbar {
@@ -896,6 +947,8 @@
       <option value="lejano">Orden: más lejano primero</option>
       <option value="alfa">Orden: alfabético</option>
     </select>
+    <button class="btn ghost" id="hist-btn" type="button" aria-expanded="false"
+            aria-controls="hist">Historial</button>
     <span class="spacer"></span>
     <span class="save-chip" id="save-chip" data-state="idle">Sin cambios</span>
   </div>
@@ -945,6 +998,18 @@
     </div>
   </section>
 
+  <section class="hist" id="hist" aria-label="Historial de cambios" hidden>
+    <div class="hist-head">
+      <h2>Historial de cambios</h2>
+      <label for="f-autor">Firmas como</label>
+      <input id="f-autor" type="text" maxlength="40" autocomplete="off"
+             placeholder="Tu nombre o grado">
+    </div>
+    <ol class="hist-list" id="hist-list"></ol>
+    <p class="hist-foot">Se conservan los últimos 40 cambios. El registro completo y firmado
+      son los commits del repositorio.</p>
+  </section>
+
   <footer class="foot">
     <span id="foot-count">—</span>
     <span id="foot-store">Los contadores se actualizan cada segundo</span>
@@ -958,17 +1023,38 @@
 (function () {
   "use strict";
 
-  var STORE = "cuenta-regresiva-hitos-v1";
-  var PREFS = "cuenta-regresiva-prefs-v1";
-  var DATA_FILE = "data/hitos.json";
+  // ---------- dónde vive la información ----------
+  // Los datos viven en el repositorio, en data/hitos.json. Cualquiera que abra
+  // el enlace los lee. Para que la página además los escriba hace falta una
+  // dirección de guardado: un servicio mínimo que guarda el token de GitHub
+  // fuera de esta página, porque el repositorio es público y un token escrito
+  // aquí quedaría a la vista de todos (ver worker/LEEME.md).
+  //
+  // Mientras esta dirección esté vacía, la página muestra la información del
+  // repositorio y los cambios quedan solo en el navegador de quien los hace.
+  var SYNC_URL = "https://cuenta-regresiva-cacom5.cocoloc312.workers.dev";
 
-  var state = { v: 1, entries: [] };
+  var STORE = "cuenta-regresiva-local-v2";
+  var STORE_V1 = "cuenta-regresiva-hitos-v1";
+  var PREFS = "cuenta-regresiva-prefs-v1";
+  var AUTOR = "cuenta-regresiva-autor-v1";
+  var DATA_FILE = "data/hitos.json";
+  var HIST_MAX = 40;          // cambios que se conservan en el historial
+  var POLL_MS = 45000;        // cada cuánto se relee el repositorio
+  var MAX_CONFLICTOS = 3;     // reintentos cuando otra persona guardó primero
+
+  var state = { v: 1, entries: [], historial: [] };
   var prefs = { filter: "todos", sort: "prox", tags: [], theme: "auto" };
   var NO_TAG = "~sin-etiqueta~";
-  var api = null;
-  var canPublish = true;
+  var autor = "";             // nombre de quien edita, para firmar el historial
+  var remoteSha = null;       // versión del archivo del repo sobre la que vamos
+  var dirty = {};             // id -> true: actividades tocadas sin guardar
+  var deleted = {};           // id -> true: actividades borradas sin guardar
+  var pendingHist = [];       // cambios sin guardar, en orden inverso
+  var syncing = false;
+  var syncAgain = false;
+  var conflictos = 0;
   var saveTimer = null;
-  var pendingSave = false;
   var editingId = null;
   var targets = {};   // id -> timestamp objetivo
   var lastDays = {};  // id -> días completos mostrados
@@ -1109,18 +1195,87 @@
         creado: parseDate(e.creado) ? e.creado : toISO(today())
       };
     });
-    return { v: 1, entries: entries };
+    return { v: 1, entries: entries, historial: cleanHist(raw.historial) };
   }
 
+  // El historial es una lista corta de «quién cambió qué y cuándo», guardada
+  // dentro del mismo archivo. El registro largo y firmado son los commits.
+  function cleanHist(raw) {
+    if (!Array.isArray(raw)) return [];
+    return raw.filter(function (h) {
+      return h && typeof h.ts === "string" && typeof h.accion === "string" && parseStamp(h.ts);
+    }).map(function (h) {
+      return {
+        ts: h.ts,
+        quien: String(h.quien || "").slice(0, 60),
+        accion: h.accion,
+        titulo: String(h.titulo || "").slice(0, 120)
+      };
+    }).slice(0, HIST_MAX);
+  }
+  function parseStamp(s) {
+    var t = Date.parse(s);
+    return isFinite(t) ? t : null;
+  }
+
+  function logChange(accion, titulo) {
+    var h = {
+      ts: new Date().toISOString(),
+      quien: autor || "",
+      accion: accion,
+      titulo: String(titulo || "").slice(0, 120)
+    };
+    state.historial.unshift(h);
+    if (state.historial.length > HIST_MAX) state.historial.length = HIST_MAX;
+    pendingHist.unshift(h);
+    if (pendingHist.length > HIST_MAX) pendingHist.length = HIST_MAX;
+  }
+  function markDirty(id) {
+    if (id) dirty[id] = true;
+  }
+  function markDeleted(id) {
+    if (!id) return;
+    delete dirty[id];
+    deleted[id] = true;
+  }
+  function hasPending() {
+    return pendingHist.length > 0 ||
+           Object.keys(dirty).length > 0 ||
+           Object.keys(deleted).length > 0;
+  }
+
+  // El trabajo sin guardar sobrevive a recargar la página: si en ese momento
+  // no había forma de escribir en el repositorio, no se pierde.
   function loadLocal() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORE); } catch (e) {}
+    if (raw) {
+      try {
+        var box = JSON.parse(raw);
+        if (box && typeof box === "object") {
+          var st = normalize(box.state);
+          if (st) {
+            dirty = (box.dirty && typeof box.dirty === "object") ? box.dirty : {};
+            deleted = (box.deleted && typeof box.deleted === "object") ? box.deleted : {};
+            pendingHist = cleanHist(box.pendingHist);
+            return st;
+          }
+        }
+      } catch (e) {}
+    }
+    // Formato anterior: los datos vivían sueltos en el navegador.
     try {
-      var raw = localStorage.getItem(STORE);
-      if (!raw) return null;
-      return normalize(JSON.parse(raw));
-    } catch (e) { return null; }
+      var viejo = localStorage.getItem(STORE_V1);
+      if (viejo) return normalize(JSON.parse(viejo));
+    } catch (e) {}
+    return null;
   }
   function saveLocal() {
-    try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+    try {
+      localStorage.setItem(STORE, JSON.stringify({
+        state: state, dirty: dirty, deleted: deleted, pendingHist: pendingHist
+      }));
+    } catch (e) {}
   }
   function loadPrefs() {
     try {
@@ -1184,54 +1339,232 @@
     mqDark.addEventListener("change", function () { if (prefs.theme === "auto") applyTheme(); });
   }
 
-  // ---------- guardado ----------
+  // ---------- guardado en el repositorio ----------
   var chip = document.getElementById("save-chip");
   var footStore = document.getElementById("foot-store");
-  function setChip(stateName, text) {
+  var PIE = {
+    repo: "La información vive en el repositorio: todos ven lo mismo al abrir el enlace",
+    local: "Sin conexión con el repositorio: los cambios esperan en este navegador",
+    solo: "Vista de consulta: la información viene del repositorio y no se edita desde aquí"
+  };
+  function setChip(stateName, text, pie) {
     chip.dataset.state = stateName;
     chip.textContent = text;
-    if (stateName === "local") {
-      footStore.textContent = "Los datos quedan guardados en este navegador y este dispositivo";
-    } else if (stateName === "idle") {
-      footStore.textContent = "Los datos quedan guardados en la página, disponibles al abrir el enlace";
-    }
+    if (pie) footStore.textContent = pie;
+  }
+
+  function payloadOf(s) {
+    return {
+      v: 1,
+      actualizado: new Date().toISOString(),
+      entries: s.entries,
+      historial: s.historial
+    };
+  }
+
+  // Une lo que ya hay en el repositorio con los cambios propios que todavía no
+  // se habían guardado: el repositorio es la base, y encima se vuelven a aplicar
+  // las actividades que esta persona tocó y se quitan las que borró. Así dos
+  // personas editando actividades distintas no se pisan el trabajo.
+  function mergeOnto(remote) {
+    var base = (remote && Array.isArray(remote.entries)) ? remote.entries : [];
+    var out = base.filter(function (e) { return !deleted[e.id]; });
+    var pos = {};
+    out.forEach(function (e, i) { pos[e.id] = i; });
+    state.entries.forEach(function (e) {
+      if (!dirty[e.id]) return;
+      if (pos[e.id] === undefined) out.push(e);
+      else out[pos[e.id]] = e;
+    });
+    var remoteHist = (remote && Array.isArray(remote.historial)) ? remote.historial : [];
+    return { v: 1, entries: out, historial: pendingHist.concat(remoteHist).slice(0, HIST_MAX) };
+  }
+
+  function applyRemote(json, sha) {
+    var remote = normalize(json);
+    if (!remote) return false;
+    var next = hasPending() ? normalize(mergeOnto(remote)) : remote;
+    if (!next) return false;
+    if (sha) remoteSha = sha;
+    state = next;
+    saveLocal();
+    render();
+    renderTagSuggest();
+    renderHist();
+    return true;
   }
 
   function scheduleSave() {
     saveLocal();
-    if (!canPublish) { setChip("local", "Guardado en este navegador"); return; }
-    pendingSave = true;
+    renderHist();
+    if (!SYNC_URL) { setChip("local", "Guardado en este navegador", PIE.local); return; }
     setChip("saving", "Guardando…");
     if (saveTimer) clearTimeout(saveTimer);
-    saveTimer = setTimeout(flushSave, 1400);
+    saveTimer = setTimeout(pushToRepo, 1200);
   }
 
-  function flushSave() {
+  function pushToRepo() {
     saveTimer = null;
-    if (!pendingSave) return;
-    if (!api) { setChip("local", "Guardado en este navegador"); return; }
-    var payload = {};
-    payload[DATA_FILE] = JSON.stringify({ v: 1, entries: state.entries, actualizado: new Date().toISOString() }, null, 2);
-    pendingSave = false;
-    api.publish(payload).then(function () {
-      setChip("idle", "Guardado en la página");
-    }, function (err) {
-      var code = err && err.code ? err.code : "upstream_error";
-      if (code === "conflict") {
-        setChip("saving", "Actualizando…");
-        setTimeout(function () { location.reload(); }, 400);
+    if (!SYNC_URL) return;
+    if (syncing) { syncAgain = true; return; }
+    syncing = true;
+    setChip("saving", "Guardando…");
+
+    fetch(SYNC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sha: remoteSha, autor: autor || "", data: payloadOf(state) })
+    }).then(function (r) {
+      return r.text().then(function (txt) {
+        var body = null;
+        try { body = JSON.parse(txt); } catch (e) {}
+        return { ok: r.ok, status: r.status, body: body || {} };
+      });
+    }).then(function (res) {
+      syncing = false;
+
+      if (res.ok) {
+        if (res.body.sha) remoteSha = res.body.sha;
+        dirty = {};
+        deleted = {};
+        pendingHist = [];
+        conflictos = 0;
+        saveLocal();
+        renderHist();
+        if (syncAgain) { syncAgain = false; pushToRepo(); return; }
+        setChip("idle", "Guardado en el repositorio", PIE.repo);
         return;
       }
-      if (code === "rate_limited") {
-        pendingSave = true;
-        setChip("saving", "Guardando…");
-        saveTimer = setTimeout(flushSave, 6000);
-        return;
+
+      // 409: alguien guardó primero. Se toma su versión como base, se le
+      // vuelven a aplicar los cambios propios y se reintenta.
+      if (res.status === 409) {
+        if (res.body.sha) remoteSha = res.body.sha;
+        if (res.body.data) applyRemote(res.body.data, res.body.sha);
+        conflictos += 1;
+        if (conflictos <= MAX_CONFLICTOS) {
+          setChip("saving", "Actualizando…");
+          saveTimer = setTimeout(pushToRepo, 700 * conflictos);
+          return;
+        }
       }
-      // Cualquier otro caso (incluida la falta de permiso de escritura):
-      // se sigue editando con normalidad y el trabajo queda en el navegador.
-      canPublish = false;
-      setChip("local", "Guardado en este navegador");
+      conflictos = 0;
+      setChip("local", "Guardado en este navegador", PIE.local);
+    }).catch(function () {
+      syncing = false;
+      setChip("local", "Guardado en este navegador", PIE.local);
+    });
+  }
+
+  // Lee la versión vigente. Primero por la dirección de guardado, que responde
+  // al instante; si no hay o falla, por el archivo publicado, que va un par de
+  // minutos por detrás porque GitHub Pages tiene que reconstruir la página.
+  function pullFromRepo() {
+    if (typeof fetch !== "function" || location.protocol === "file:") {
+      return Promise.resolve(false);
+    }
+    var viaSync = SYNC_URL
+      ? fetch(SYNC_URL, { cache: "no-store" })
+          .then(function (r) { if (!r.ok) throw new Error("sin respuesta"); return r.json(); })
+          .then(function (body) { return applyRemote(body.data, body.sha); })
+      : Promise.reject(new Error("sin dirección de guardado"));
+
+    return viaSync.catch(function () {
+      return fetch(DATA_FILE + "?t=" + Date.now(), { cache: "no-store" })
+        .then(function (r) { if (!r.ok) throw new Error("sin archivo"); return r.json(); })
+        .then(function (json) { return applyRemote(json, null); });
+    }).catch(function () { return false; });
+  }
+
+  // No se relee mientras hay algo a medio escribir ni mientras se guarda: ver
+  // la lista cambiar debajo del cursor es peor que verla un minuto tarde.
+  function pollRepo() {
+    if (syncing || saveTimer) return;
+    if (form && !form.hidden) return;
+    if (document.hidden) return;
+    pullFromRepo();
+  }
+
+  // ---------- historial de cambios ----------
+  var histPanel = document.getElementById("hist");
+  var histList = document.getElementById("hist-list");
+  var histBtn = document.getElementById("hist-btn");
+  var fAutor = document.getElementById("f-autor");
+
+  var ACCIONES = {
+    crear: "registró",
+    editar: "actualizó",
+    borrar: "eliminó",
+    destacar: "destacó",
+    "quitar-destacado": "quitó el destacado de"
+  };
+
+  function fmtAgo(iso) {
+    var t = parseStamp(iso);
+    if (!t) return "";
+    var seg = Math.round((Date.now() - t) / 1000);
+    if (seg < 0) seg = 0;
+    if (seg < 60) return "hace un momento";
+    if (seg < 3600) {
+      var m = Math.floor(seg / 60);
+      return "hace " + m + (m === 1 ? " minuto" : " minutos");
+    }
+    if (seg < 86400) {
+      var h = Math.floor(seg / 3600);
+      return "hace " + h + (h === 1 ? " hora" : " horas");
+    }
+    var d = Math.floor(seg / 86400);
+    if (d <= 7) return "hace " + d + (d === 1 ? " día" : " días");
+    try {
+      return new Date(t).toLocaleDateString("es-CO", { day: "numeric", month: "short", year: "numeric" });
+    } catch (e) {
+      return new Date(t).toISOString().slice(0, 10);
+    }
+  }
+
+  function renderHist() {
+    if (!histList || !histBtn) return;
+    var hs = state.historial || [];
+    var sinGuardar = pendingHist.length;
+    histBtn.textContent = sinGuardar ? "Historial · " + sinGuardar + " sin guardar"
+                                     : (hs.length ? "Historial · " + hs.length : "Historial");
+
+    if (!hs.length) {
+      histList.innerHTML = '<li class="hist-empty">Todavía no hay cambios registrados.</li>';
+      return;
+    }
+    var pend = {};
+    pendingHist.forEach(function (h) { pend[h.ts] = true; });
+
+    histList.innerHTML = hs.map(function (h) {
+      var esPend = !!pend[h.ts];
+      return '<li' + (esPend ? ' class="is-pend"' : '') + '>' +
+        '<span class="hist-when">' + esc(fmtAgo(h.ts)) + '</span>' +
+        '<span class="hist-what"><b>' + esc(h.quien || "Alguien") + '</b> ' +
+        (ACCIONES[h.accion] || "cambió") +
+        (h.titulo ? ' «' + esc(h.titulo) + '»' : "") + '</span>' +
+        (esPend ? '<span class="hist-tag">sin guardar</span>' : "") +
+        '</li>';
+    }).join("");
+  }
+
+  if (histBtn) {
+    histBtn.addEventListener("click", function () {
+      var abierto = !histPanel.hidden;
+      histPanel.hidden = abierto;
+      histBtn.setAttribute("aria-expanded", abierto ? "false" : "true");
+      if (!abierto) {
+        renderHist();
+        try { histPanel.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+        catch (e) {}
+      }
+    });
+  }
+  if (fAutor) {
+    // El nombre no se pide con un cartel: se deja a mano y firma lo que venga.
+    fAutor.addEventListener("input", function () {
+      autor = fAutor.value.trim().slice(0, 40);
+      try { localStorage.setItem(AUTOR, autor); } catch (e) {}
     });
   }
 
@@ -1705,13 +2038,18 @@
           etiquetas: etiquetas, destacado: e.destacado, creado: e.creado
         };
       });
+      markDirty(editingId);
+      logChange("editar", titulo);
     } else {
+      var nuevoId = "h" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       state.entries.push({
-        id: "h" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+        id: nuevoId,
         titulo: titulo, fecha: fecha, hora: hora, nota: fNota.value.trim(),
         etiquetas: etiquetas, destacado: false,
         creado: toISO(today())
       });
+      markDirty(nuevoId);
+      logChange("crear", titulo);
     }
     closeForm();
     render();
@@ -1738,10 +2076,15 @@
       openStage(id);
     } else if (act === "star") {
       entry.destacado = !entry.destacado;
+      markDirty(id);
+      logChange(entry.destacado ? "destacar" : "quitar-destacado", entry.titulo);
       render();
       scheduleSave();
     } else {
+      var borrado = entry.titulo;
       state.entries = state.entries.filter(function (e) { return e.id !== id; });
+      markDeleted(id);
+      logChange("borrar", borrado);
       if (editingId === id) closeForm();
       if (stageId === id) closeStage();
       render();
@@ -1844,41 +2187,41 @@
     }
   } catch (e) {}
 
-  state = loadLocal() || { v: 1, entries: [] };
+  try { autor = String(localStorage.getItem(AUTOR) || "").slice(0, 40); } catch (e) {}
+  if (fAutor) fAutor.value = autor;
+
+  state = loadLocal() || { v: 1, entries: [], historial: [] };
   render();
   renderTagSuggest();
+  renderHist();
   tick();
   setInterval(tick, 1000);
+  setInterval(renderHist, 60000);   // mantiene al día los «hace X minutos»
 
-  // El archivo de datos compartido solo existe dentro de la página publicada.
-  // En un servidor web normal no se busca: los datos viven en el navegador.
-  var inArtifact = !!(window.claude && typeof window.claude.use === "function");
-  if (inArtifact && typeof fetch === "function" && location.protocol !== "file:") {
-    fetch(DATA_FILE, { cache: "no-store" }).then(function (r) {
-      if (!r.ok) throw new Error("sin archivo");
-      return r.json();
-    }).then(function (json) {
-      var fromServer = normalize(json);
-      if (fromServer) {
-        state = fromServer;
-        saveLocal();
-        render();
-        renderTagSuggest();
-        setChip("idle", "Guardado en la página");
-      }
-    }).catch(function () { /* primera apertura: se conserva el estado local */ });
+  // Estado del guardado dicho en una frase, según lo que de verdad está pasando.
+  function refreshChip() {
+    if (hasPending()) {
+      setChip("local", "Guardado en este navegador", PIE.local);
+    } else if (SYNC_URL) {
+      setChip("idle", "Guardado en el repositorio", PIE.repo);
+    } else {
+      setChip("idle", "Solo consulta", PIE.solo);
+    }
   }
 
-  if (inArtifact) {
-    window.claude.use("artifact").then(function (a) {
-      if (!a) { canPublish = false; setChip("local", "Guardado en este navegador"); return; }
-      api = a;
-      if (pendingSave && !saveTimer) flushSave();
-    }, function () { canPublish = false; setChip("local", "Guardado en este navegador"); });
-  } else {
-    canPublish = false;
-    setChip("local", "Guardado en este navegador");
-  }
+  // La información vive en el repositorio: se lee al abrir la página, cada
+  // cierto tiempo y al volver a la pestaña, para que quien la deja abierta vea
+  // lo que fueron cargando los demás.
+  setChip("saving", "Leyendo…");
+  pullFromRepo().then(function () {
+    if (SYNC_URL && hasPending()) pushToRepo();
+    else refreshChip();
+  });
+
+  setInterval(pollRepo, POLL_MS);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) pollRepo();
+  });
 })();
 </script>
 
