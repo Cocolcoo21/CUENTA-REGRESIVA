@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "actualizado": "2026-10-09T12:06:28.468Z",
+  "actualizado": "2026-10-09T12:11:22.790Z",
   "entries": [
     {
       "id": "hmtx5j29r2ccv",
@@ -11,19 +11,15 @@
       "etiquetas": [],
       "destacado": false,
       "creado": "2026-09-11"
-    },
-    {
-      "id": "hmv0x6d3d7eag",
-      "titulo": "Ver al amor",
-      "fecha": "2026-10-30",
-      "hora": "07:00",
-      "nota": "Ser felizzzzzzz",
-      "etiquetas": [],
-      "destacado": false,
-      "creado": "2026-10-09"
     }
   ],
   "historial": [
+    {
+      "ts": "2026-10-09T12:11:21.389Z",
+      "quien": "",
+      "accion": "borrar",
+      "titulo": "Ver al amor"
+    },
     {
       "ts": "2026-10-09T12:06:26.762Z",
       "quien": "",
