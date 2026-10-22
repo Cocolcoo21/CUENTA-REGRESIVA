@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "actualizado": "2026-10-22T23:12:16.703Z",
+  "actualizado": "2026-10-22T23:12:35.011Z",
   "entries": [
     {
       "id": "hmtx5j29r2ccv",
@@ -11,19 +11,15 @@
       "etiquetas": [],
       "destacado": false,
       "creado": "2026-09-11"
-    },
-    {
-      "id": "hmvk5oo7n8bw3",
-      "titulo": "prueba",
-      "fecha": "2026-10-23",
-      "hora": "",
-      "nota": "pueba",
-      "etiquetas": [],
-      "destacado": false,
-      "creado": "2026-10-22"
     }
   ],
   "historial": [
+    {
+      "ts": "2026-10-22T23:12:33.616Z",
+      "quien": "",
+      "accion": "borrar",
+      "titulo": "prueba"
+    },
     {
       "ts": "2026-10-22T23:12:15.251Z",
       "quien": "",
