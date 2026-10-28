@@ -1,8 +1,27 @@
 {
   "v": 1,
-  "actualizado": "2026-10-28T18:07:27.719Z",
-  "entries": [],
+  "actualizado": "2026-10-28T18:09:06.543Z",
+  "entries": [
+    {
+      "id": "hmvsfhwnwti1y",
+      "titulo": "Aniversario Reserva",
+      "fecha": "2026-11-07",
+      "hora": "08:00",
+      "nota": "",
+      "etiquetas": [
+        "Ceremonia"
+      ],
+      "destacado": false,
+      "creado": "2026-10-28"
+    }
+  ],
   "historial": [
+    {
+      "ts": "2026-10-28T18:09:05.181Z",
+      "quien": "",
+      "accion": "crear",
+      "titulo": "Aniversario Reserva"
+    },
     {
       "ts": "2026-10-28T18:07:23.988Z",
       "quien": "",
