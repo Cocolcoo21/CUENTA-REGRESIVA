@@ -1,19 +1,14 @@
 {
   "v": 1,
-  "actualizado": "2026-10-22T23:12:35.011Z",
-  "entries": [
-    {
-      "id": "hmtx5j29r2ccv",
-      "titulo": "Aniversario No 35 Cacom-5",
-      "fecha": "2026-10-02",
-      "hora": "11:00",
-      "nota": "Cacom-5",
-      "etiquetas": [],
-      "destacado": false,
-      "creado": "2026-09-11"
-    }
-  ],
+  "actualizado": "2026-10-28T18:07:27.719Z",
+  "entries": [],
   "historial": [
+    {
+      "ts": "2026-10-28T18:07:23.988Z",
+      "quien": "",
+      "accion": "borrar",
+      "titulo": "Aniversario No 35 Cacom-5"
+    },
     {
       "ts": "2026-10-22T23:12:33.616Z",
       "quien": "",
