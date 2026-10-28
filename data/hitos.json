@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "actualizado": "2026-10-28T18:09:06.543Z",
+  "actualizado": "2026-10-28T18:10:26.232Z",
   "entries": [
     {
       "id": "hmvsfhwnwti1y",
@@ -13,9 +13,25 @@
       ],
       "destacado": false,
       "creado": "2026-10-28"
+    },
+    {
+      "id": "hmvsfjm4ubivw",
+      "titulo": "Vacaciones",
+      "fecha": "2026-11-09",
+      "hora": "00:01",
+      "nota": "",
+      "etiquetas": [],
+      "destacado": false,
+      "creado": "2026-10-28"
     }
   ],
   "historial": [
+    {
+      "ts": "2026-10-28T18:10:24.846Z",
+      "quien": "",
+      "accion": "crear",
+      "titulo": "Vacaciones"
+    },
     {
       "ts": "2026-10-28T18:09:05.181Z",
       "quien": "",
