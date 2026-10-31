@@ -1,6 +1,6 @@
 {
   "v": 1,
-  "actualizado": "2026-10-28T18:10:26.232Z",
+  "actualizado": "2026-10-31T16:39:32.688Z",
   "entries": [
     {
       "id": "hmvsfhwnwti1y",
@@ -23,9 +23,25 @@
       "etiquetas": [],
       "destacado": false,
       "creado": "2026-10-28"
+    },
+    {
+      "id": "hmvwmm9uqmo6a",
+      "titulo": "Instalación Palas",
+      "fecha": "2026-11-16",
+      "hora": "08:30",
+      "nota": "",
+      "etiquetas": [],
+      "destacado": false,
+      "creado": "2026-10-31"
     }
   ],
   "historial": [
+    {
+      "ts": "2026-10-31T16:39:30.915Z",
+      "quien": "",
+      "accion": "crear",
+      "titulo": "Instalación Palas"
+    },
     {
       "ts": "2026-10-28T18:10:24.846Z",
       "quien": "",
